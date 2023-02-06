@@ -65,9 +65,9 @@ int lsbCopy(int x) {
  *   Max ops: 8
  *   Rating: 1
  *
- * Using de Morgan's laws gives us the idea that not (x and y) =
- * (not x) or (not y). Using this pricniple and using the
- * ~ operator allows us to can the not(x and y) to (x and y).
+ * Using de Morgan's laws gives us the idea that not(x and y) =
+ * (not x) or (not y). Using this principle and using the ~
+ * operator allows us to go from not(x and y) = to (x and y) =.
  */
 int andBits(int x, int y) {
   return ~((~x) | (~y));
