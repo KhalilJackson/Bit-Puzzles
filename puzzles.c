@@ -1,7 +1,7 @@
 /* 
  * Lab 1 - A Bit Puzzling 
  * 
- * <PLEASE PUT YOUR NAME HERE>
+ * Khalil Jackson
  * 
  * puzzles.c - Source file with your puzzle solutions.
  *
@@ -16,9 +16,14 @@
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
+ *
+ * One in binary is 0000...0001. Shifting the one bit 31 
+ * times to the left gives us 1000...0000,the minimum integer.
+ * Flipping the bits gets us to the largest (0111...1111).
  */
 int maxVal(void) {
-  return 2;
+
+  return ~(1 << 31);
 }
 
 /* 
@@ -27,9 +32,15 @@ int maxVal(void) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 6
  *   Rating: 1
+ * 
+ * The MSB determines the sign of the number. Right shifting
+ * the bit uses arithmetic shift where the bits are either
+ * all ones or zeroes. Masking with one ensures that we keep
+ * the now LSB bit, which will be one if negative and zero 
+ * if positive.
  */
 int negCheck(int x) {
-  return 2;
+  return ((x >> 31) & 1);
 }
 
 /* 
@@ -38,20 +49,28 @@ int negCheck(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 5
  *   Rating: 1
+ *
+ * Left shifting the LSB to the MSB allows us to do an arithmetic
+ * right shift where all bits with be replaced by what was in the 
+ * MSB, which is the original LSB.
  */
 int lsbCopy(int x) {
-  return 2;
+  return ((x << 31) >> 31);
 }
 
 /* 
- * andBits - x&y using only ~ and | 
+ * andBitsh - x&y using only ~ and | 
  *   Example: andBits(6, 5) = 4
  *   Legal ops: ~ |
  *   Max ops: 8
  *   Rating: 1
+ *
+ * Using de Morgan's laws gives us the idea that not (x and y) =
+ * (not x) or (not y). Using this pricniple and using the
+ * ~ operator allows us to can the not(x and y) to (x and y).
  */
 int andBits(int x, int y) {
-  return 2;
+  return ~((~x) | (~y));
 }
 
 /* 
