@@ -22,7 +22,6 @@
  * Flipping the bits gets us to the largest (0111...1111).
  */
 int maxVal(void) {
-
   return ~(1 << 31);
 }
 
@@ -79,9 +78,13 @@ int andBits(int x, int y) {
  *   Legal ops: ~ &
  *   Max ops: 14
  *   Rating: 1
+ *
+ * Uses de Morgan's laws, which states that not(x or y) = (not x)
+ * and (not y). To make it x or y, we distribute the ~ across the 
+ * other half of the equation. 
  */
 int xorBits(int x, int y) {
-  return 2;
+  return (~(~x & ~y) & ~(x & y));
 }
 
 /* 
@@ -89,9 +92,12 @@ int xorBits(int x, int y) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 8
  *   Rating: 2
+ * 
+ * The hex representation of this bianry pattern is 0x49249249. Using this,
+ * we can arrange the particular bytes in order by shifting them and using or.
  */
 int setThirdBits(void) {
-  return 2;
+  return ((((0x24)|(0x49 << 8)) << 16) | ((0x49)|(0x92<<8)));
 }
 
 /* 
@@ -101,9 +107,21 @@ int setThirdBits(void) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 6
  *   Rating: 2
+ *
+ * Create a shift factor (4n) that we can rights shift by twice to get the 
+ * appropriate byte shift where the desired byte is in the first byte 
+ * position before masking it.
  */
 int byteExtract(int x, int n) {
-  return 2;
+
+	int shift = n + n + n + n;
+
+
+	int mask = 0x000000FF;
+	int val = x >> shift >> shift;
+
+
+  return val & mask;
 }
 
 /* 
@@ -116,19 +134,32 @@ int byteExtract(int x, int n) {
  *  Rating: 2
  */
 int byteSwitch(int x, int n, int m) {
+
+
   return 2;
 }
 
 /* 
- * addOverflow - Determine if can compute x+y without overflow
+ * addOverflow - Determine if can compute x+y without overflow 
  *   Example: addOverflow(0x80000000,0x80000000) = 0,
  *            addOverflow(0x80000000,0x70000000) = 1, 
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 20
  *   Rating: 2
+ *
+ * Right shifts x, y, and their sum to focus on sign bits. Then,
+ * uses ^ to determine if the signs of x and y are the same before
+ * anding the results and notting it to receive the answer in terms
+ * of zero and one.
  */
 int addOverflow(int x, int y) {
-  return 2;
+
+	int val1 = (x>>31);
+	int val2 = (y>>31);
+
+	int val3 = ((x+y)>>31);
+
+  return (!((val1 ^ val3) & (val3 ^ val2)));
 }
 
 /* 
@@ -138,10 +169,23 @@ int addOverflow(int x, int y) {
  *   Examples: bitFit(5,3) = 0, bitFit(-4,3) = 1
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 15
- *   Rating: 3
+ *   Rating: 3 (shift n minus one)
+ *
+ * x or with sign bit to ensure number is nonnegative. Right shift
+ * that result by n - 1 then not it, which turns zero in to one and
+ * any non zero values into zero. Things that can be represented in 
+ * that number of bits would return one. 
  */
 int bitFit(int x, int n) {
-  return 2;
+
+	int variable = x >> 31;
+
+	int newNum = x ^ variable;
+
+	int compare = (newNum >> (n + ((1<<31)>>31)));
+
+
+  return !(compare);
 }
 
 /* 
@@ -153,7 +197,11 @@ int bitFit(int x, int n) {
  *   Rating: 3
  */
 int shiftLogical(int x, int n) {
-  return 2;
+
+	int val = x >> n;
+
+
+  return 2; 
 }
 
 /* 
@@ -162,9 +210,16 @@ int shiftLogical(int x, int n) {
  *   Legal ops: ~ & ^ | + << >>
  *   Max ops: 12
  *   Rating: 3
+ *
+ * Use | on x and its two's complement to determine if the number is 
+ * zero or nonzero; non zero values will be right shifted and create one bits. 
+ * Adding one to thses bits will lead to a carryout bit of one and binary zero
+ * while the value one would be represented otherwise. 
  */
 int not(int x) {
-  return 2;
+
+
+  return (((x | (~x + 1)) >> 31) + 1);
 }
 
 /* 
