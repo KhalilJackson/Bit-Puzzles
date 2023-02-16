@@ -357,13 +357,16 @@ unsigned fp_abs(unsigned uf) {
  */
 unsigned fp_twice(unsigned uf) {
 
+	//Getting the exp bits
+	int exp = (uf >> 23) & 0xFF;
+
 	//If value is special case
-	if (((uf >> 23) & 0xFF) == 0xFF) {
+	if (exp == 0xFF) {
 		return uf;
 	}
 
 	//If value is denormalized
-	if (((uf >> 23) & 0xFF) == 0x00) {
+	if (exp  == 0x00) {
 
 		//Left shift uf while maintaining sign bit
 		return (uf & (1<<31)) | (uf<<1);
