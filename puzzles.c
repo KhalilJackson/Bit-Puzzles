@@ -137,8 +137,8 @@ int byteExtract(int x, int n) {
  *  Max ops: 25
  *  Rating: 2
  *
- * Creates a mask by shifting ones into the nth and mth bytes, | them then ^ by 
- * 0xFFFFFFFF to get a mask of ones with zeros in the nth and mth byte positions. 
+ * Creates a mask by shifting ones into the nth and mth bytes, | them then using 
+ * ~ creates a mask of ones with zeros in the nth and mth byte positions. 
  * & this mask with x to get one that maintians the order of the unswitched bytes
  * while placing zeros in the swapped byte positions. 
  *
@@ -153,7 +153,7 @@ int byteSwitch(int x, int n, int m) {
 	int mByte = 255 << (m << 3);
 
 	//Combine the byte positions to form a mask
-	int switchMask = (nByte | mByte) ^ 0xFFFFFFFF;
+	int switchMask = ~(nByte | mByte);
 
 	//Create mask in first byte position then shift
 	int mask = 0x000000FF;
@@ -309,7 +309,9 @@ int signMagnitude(int x) {
  *
  * Creates a mask to gather the exp bits then checks their contents.
  * If the exp bits are all zeros, it falls under NaN and return.
- * Otherwise, mask with a ~(1<<31).
+ * Otherwise, mask with  ~(1<<31); this places a zero in the sign bit
+ * and ones elsewhere, which allowsus to return the number without its 
+ * sign bit.
  */
 unsigned fp_abs(unsigned uf) {
 
@@ -339,39 +341,34 @@ unsigned fp_abs(unsigned uf) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 30
  *   Rating: 3
+ *
+ * Uses the masking principle from the previous problem to get the exp bits
+ * of uf (except you don't have to worry about the sign bit situation for
+ * absolute value in this case). This will tell us if it falls under a
+ * special case, denormalized case,or normalized case.
+ *
+ * If if is a special case, like zero or NaN, return uf. If the value is
+ * denormalized, left shift uf while maintaining the sign bit. When 
+ * left-shifted, denormalized sign bits will be replaced with zeroes, so
+ * we | the shifted value by itself masked with a one in the sign bit to 
+ * ensure that a oen remains. What remains is the case that the number is
+ * normalized, meaning you shift the exp bits by + one, which will 
+ * trigger the carryout situation where the bits are effectively shifted.
  */
 unsigned fp_twice(unsigned uf) {
 
-	//Get sign bit
-	int sign = (uf >> 31) << 31;
-
-	//Creates mask for the exp bits
-	int mask = 0x000000FF << 23;
-
-	//Gets the exp bits
-	int exp = (mask & (uf << 1)) >> 23;
-
-	//If zero or negative zero, return zero
-	if ((uf == 0) || (uf == -0)) {
-		return 0;
-	}
-
-	//If NaN
-	if (exp == 0xFF) {
+	//If value is special case
+	if (((uf >> 23) & 0xFF) == 0xFF) {
 		return uf;
 	}
 
-	//If Denormalized
-	if (exp == 0) {
+	//If value is denormalized
+	if (((uf >> 23) & 0xFF) == 0x00) {
 
-		if (sign == (1<<31)) {
- 
-			return ((uf << 1) + sign);
-		}
-
-		return uf << 1;
+		//Left shift uf while maintaining sign bit
+		return (uf & (1<<31)) | (uf<<1);
 	}
 
-	//Else are normalized
-	return uf + (sign);
+	//Else it is normalized
+	return uf + (1<<23);
 }
