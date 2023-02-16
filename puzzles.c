@@ -1,8 +1,8 @@
-/* 
- * Lab 1 - A Bit Puzzling 
- * 
+/*
+ * Lab 1 - A Bit Puzzling
+ *
  * Khalil Jackson
- * 
+ *
  * puzzles.c - Source file with your puzzle solutions.
  *
  * NOTE: Do not include the <stdio.h> header; it confuses the blc
@@ -11,8 +11,8 @@
  * 'never accept compiler warnings' rule!).
  */
 
-/* 
- * maxVal - return maximum two's complement integer 
+/*
+ * maxVal - return maximum two's complement integer
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 4
  *   Rating: 1
@@ -66,7 +66,7 @@ int lsbCopy(int x) {
  *
  * Using de Morgan's laws gives us the idea that not(x and y) =
  * (not x) or (not y). Using this principle and using the ~
- * operator allows us to go from not(x and y) = to (x and y) =.
+ * operator allows us to go from not(x and y) to (x and y).
  */
 int andBits(int x, int y) {
   return ~((~x) | (~y));
@@ -93,10 +93,17 @@ int xorBits(int x, int y) {
  *   Max ops: 8
  *   Rating: 2
  * 
- * The hex representation of this bianry pattern is 0x49249249. Using this,
- * we can arrange the particular bytes in order by shifting them and using or.
+ * The hex representation of this binary pattern is 0x49249249. Using this,
+ * we can arrange the particular bytes in order by shifting them to their correct
+ * byte positions and using | to combine them.
+ *
+ * Return statement if broken into two halves. Left half shifts 0x49 to the left
+ * byte position of 0x24. Right half 0x92 is shifted to the left byte position of 
+ * 0x49. Left half is shifted 16 times to the left so that the bytes fall in order
+ * of 0x49249249 when they are | together.
  */
 int setThirdBits(void) {
+
   return ((((0x24)|(0x49 << 8)) << 16) | ((0x49)|(0x92<<8)));
 }
 
@@ -108,18 +115,15 @@ int setThirdBits(void) {
  *   Max ops: 6
  *   Rating: 2
  *
- * Create a shift factor (4n) that we can rights shift by twice to get the 
- * appropriate byte shift where the desired byte is in the first byte 
- * position before masking it.
+ * Create a mask of ones in the first byte position and right shift the number by 
+ * (n << 3) to take advantage of the powers of two in binary, which allows one bit 
+ * shift operation to shift by an entire byte. Once the desired byte is in the 
+ * first byte position, it can be masked to extract the byte.
  */
 int byteExtract(int x, int n) {
 
-	int shift = n + n + n + n;
-
-
 	int mask = 0x000000FF;
-	int val = x >> shift >> shift;
-
+	int val = x >> (n << 3);
 
   return val & mask;
 }
@@ -132,11 +136,38 @@ int byteExtract(int x, int n) {
  *  Legal ops: ! ~ & ^ | + << >>
  *  Max ops: 25
  *  Rating: 2
+ *
+ * Creates a mask by shifting ones into the nth and mth bytes, | them then ^ by 
+ * 0xFFFFFFFF to get a mask of ones with zeros in the nth and mth byte positions. 
+ * & this mask with x to get one that maintians the order of the unswitched bytes
+ * while placing zeros in the swapped byte positions. 
+ *
+ * Uses the same approach from byteExtract to gather the nth and mth byte. Then, the
+ * bits are shifted into their swapped byte positions and | together to get a 
+ * rearranged number.
  */
 int byteSwitch(int x, int n, int m) {
 
+	//Placing one bits in byte positions
+	int nByte = 255 << (n << 3);
+	int mByte = 255 << (m << 3);
 
-  return 2;
+	//Combine the byte positions to form a mask
+	int switchMask = (nByte | mByte) ^ 0xFFFFFFFF;
+
+	//Create mask in first byte position then shift
+	int mask = 0x000000FF;
+	int shifted1 = x >> (n << 3);
+	int shifted2 = x >> (m << 3);
+
+	//Save the masked values as bytes
+	int firstByte = shifted1 & mask;
+	int secondByte = shifted2 & mask;
+
+	//Combine the switchMask and rearranged bytes into one number
+	int bytesSwap = (x & switchMask) | (firstByte << (m <<3)) | (secondByte << (n <<3));
+
+  return bytesSwap;
 }
 
 /* 
@@ -149,17 +180,23 @@ int byteSwitch(int x, int n, int m) {
  *
  * Right shifts x, y, and their sum to focus on sign bits. Then,
  * uses ^ to determine if the signs of x and y are the same before
- * anding the results and notting it to receive the answer in terms
+ * we & the results and ! it to receive the answer in terms
  * of zero and one.
+ *
+ * Return statement logic. If xSign and ySign are the same and the
+ * sumSign is different, the & returns 1 and is ! to 0. The opposite
+ * is true for vice versa.
  */
 int addOverflow(int x, int y) {
 
-	int val1 = (x>>31);
-	int val2 = (y>>31);
+	//Getting the signs of x and y
+	int xSign = (x>>31);
+	int ySign = (y>>31);
 
-	int val3 = ((x+y)>>31);
+	//Getting the sign of their sum
+	int sumSign = ((x+y)>>31);
 
-  return (!((val1 ^ val3) & (val3 ^ val2)));
+  return (!((xSign ^ sumSign) & (sumSign ^ ySign)));
 }
 
 /* 
@@ -195,13 +232,27 @@ int bitFit(int x, int n) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 20
  *   Rating: 3
+ *
+ * Right shifting will place the necessary bits in the correct position
+ * but may leave a trail of zeroes. Creating a mask to turn the ones to
+ * zeroes and maintains the shifted bits requires right shifting (1<<31)
+ * n - 1 times, which creates ones in the zero bits should be and zeroes
+ * where the shifted bits should be. Flipping this pattern switches the
+ * positions of the ones and zeroes so that when the shifted number is &
+ * with the mask,the potential one bits are turned to zeroes and the
+ * shifted bits are maintained.
  */
 int shiftLogical(int x, int n) {
 
-	int val = x >> n;
+	//Shiftright shift normally
+	int shift = x >> n;
 
+	//Take 1000...0000, shift it n times
+	//Get 1111...1111, left shift one bit
+	//Turn the ones to zero and vice versa
+	int mask = ~(((1 << 31) >> n) << 1) ;
 
-  return 2; 
+  return shift & mask; 
 }
 
 /* 
@@ -230,9 +281,19 @@ int not(int x) {
  *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 15
  *   Rating: 2
+ *
+ * To go from a negative number in signed magnitutde, convert into positive version
+ * and change the sign bit to a zero. The first half of the return statment gives 
+ * the positive version of x if it is negative and & it with its sign. The second
+ * half of the return statment ensures the sign bit is in the correct spot.
  */
 int signMagnitude(int x) {
-  return 2;
+
+	int p1 = ~x + 1;
+	int tMin = 1<<31;
+	int sign = x >> 31;
+
+  return (((p1 + tMin) & sign) | (x & (~sign)));
 }
 
 /* 
@@ -245,9 +306,27 @@ int signMagnitude(int x) {
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 10
  *   Rating: 2
+ *
+ * Creates a mask to gather the exp bits then checks their contents.
+ * If the exp bits are all zeros, it falls under NaN and return.
+ * Otherwise, mask with a ~(1<<31).
  */
 unsigned fp_abs(unsigned uf) {
-  return 2;
+
+	//Creates mask for the exp bits
+	int mask = 0x000000FF << 23;
+
+	//Shift uf left one to get rid of sign bit
+	//Mask than shift to remove lesser bits
+	int exp = (mask & (uf << 1)) >> 23; 
+
+	//If NaN,retun uf
+	if (exp == 0xFF) {
+		return uf;
+	}
+	else {
+		return (uf & ~(1<<31));
+	}
 }
 
 /* 
@@ -262,6 +341,37 @@ unsigned fp_abs(unsigned uf) {
  *   Rating: 3
  */
 unsigned fp_twice(unsigned uf) {
-  return 2;
-}
 
+	//Get sign bit
+	int sign = (uf >> 31) << 31;
+
+	//Creates mask for the exp bits
+	int mask = 0x000000FF << 23;
+
+	//Gets the exp bits
+	int exp = (mask & (uf << 1)) >> 23;
+
+	//If zero or negative zero, return zero
+	if ((uf == 0) || (uf == -0)) {
+		return 0;
+	}
+
+	//If NaN
+	if (exp == 0xFF) {
+		return uf;
+	}
+
+	//If Denormalized
+	if (exp == 0) {
+
+		if (sign == (1<<31)) {
+ 
+			return ((uf << 1) + sign);
+		}
+
+		return uf << 1;
+	}
+
+	//Else are normalized
+	return uf + (sign);
+}
