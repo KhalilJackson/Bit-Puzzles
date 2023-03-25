@@ -1,0 +1,32 @@
+1. Verifying compliance using './blc -z'.
+
+2. Determining correctness using './btest -g'.
+gcc -O -Wall -m32 -lm -o btest puzzles.c btest.c decl.c tests.c 
+
+3. Checking for operator count violations using './blc -Z'.
+
+4. Scoring performance using './btest -g -r 2'.
+gcc -O -Wall -m32 -lm -o btest puzzles.c btest.c decl.c tests.c 
+
+
+5. Counting operators using './blc -e'.
+
+Correctness Results	Perf Results
+Points	Rating	Errors	Points	Ops	Puzzle
+1	1	0	2	2	maxVal
+1	1	0	2	2	negCheck
+1	1	0	2	2	lsbCopy
+1	1	0	2	4	andBits
+1	1	0	2	7	xorBits
+2	2	0	2	6	setThirdBits
+2	2	0	2	3	byteExtract
+2	2	0	2	19	byteSwitch
+2	2	0	2	8	addOverflow
+3	3	0	2	7	bitFit
+3	3	0	2	6	shiftLogical
+3	3	0	2	5	not
+3	3	0	2	9	signMagnitude
+2	2	0	2	8	fp_abs
+3	3	0	2	10	fp_twice
+
+Score = 60/60 [30/30 Corr + 30/30 Perf] (98 total operators)
